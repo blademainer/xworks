@@ -10,9 +10,18 @@ enum Actions {
     STOP = 2;
 };
 
-message Action {
+message Request {
     string name = 1;
     int32 type = 2;
-    google.protobuf.Any args = 4;
+    google.protobuf.Any body = 4;
 }
+
+message Response {
+    string code = 1;
+    string message = 2;
+    string describe = 3;
+    google.protobuf.Any body = 4;
+}
+
+
 
