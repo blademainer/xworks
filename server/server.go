@@ -3,16 +3,18 @@ package main
 import (
 	"net"
 	"os"
-	log "github.com/sirupsen/logrus"
+	logger "github.com/sirupsen/logrus"
 	"strconv"
 	"fmt"
+	"github.com/blademainer/xworks/network"
+	"time"
 )
 
 const (
 	ENV_SERVER_PORT = "SERVER_PORT"
 	ENV_LOG_LEVEL   = "LOG_LEVEL"
 
-	DEFAULT_SERVER_PORT    = "10060"
+	DEFAULT_SERVER_PORT    = "1717"
 	DEFAULT_SERVER_NETWORK = "tcp"
 	DEFAULT_LOG_LEVEL      = "debug"
 
@@ -30,10 +32,10 @@ type (
 )
 
 func (server *Server) Start(network, address string) {
-	log.Infof("Starting server... %v: %s", network, address)
+	logger.Infof("Starting server... %v: %s", network, address)
 	listener, e := net.Listen(network, address)
 	if e != nil {
-		log.Errorf("Failed to start server: %v", e.Error())
+		logger.Errorf("Failed to start server: %v", e.Error())
 		return
 	}
 	for {
@@ -41,29 +43,38 @@ func (server *Server) Start(network, address string) {
 		if err == nil {
 			go processConn(conn)
 		} else {
-			log.Errorf("Failed to accept! error: %s", err.Error())
+			logger.Errorf("Failed to accept! error: %s", err.Error())
 		}
 	}
 }
 
 func processConn(conn net.Conn) {
-	log.Debugf("Accepted connection: %v", conn)
-	conn.Write([]byte("Hello world!"))
+	conn.SetReadDeadline(time.Time{})
+	logger.Debugf("Accepted connection: %v", conn)
+	go func() {
+		for _, e := network.ReadBytes(conn); e == nil; _, e = network.ReadBytes(conn) {
+			//fmt.Println(e.Error())
+			//fmt.Println("Read: ", string(bytes))
+		}
+	}()
+	for i := 0; i < 100; i++ {
+		conn.Write([]byte("Hello world!\n"))
+	}
 }
 
 func setLogLevel() {
 	logLevel, _ := os.LookupEnv(ENV_LOG_LEVEL)
 	switch logLevel {
 	case LOG_LEVEL_DEBUG:
-		log.SetLevel(log.DebugLevel)
+		logger.SetLevel(logger.DebugLevel)
 	case LOG_LEVEL_INFO:
-		log.SetLevel(log.InfoLevel)
+		logger.SetLevel(logger.InfoLevel)
 	case LOG_LEVEL_WARN:
-		log.SetLevel(log.WarnLevel)
+		logger.SetLevel(logger.WarnLevel)
 	case LOG_LEVEL_ERROR:
-		log.SetLevel(log.ErrorLevel)
+		logger.SetLevel(logger.ErrorLevel)
 	default:
-		log.SetLevel(log.DebugLevel)
+		logger.SetLevel(logger.DebugLevel)
 	}
 }
 
@@ -71,12 +82,12 @@ func start() {
 	port, b := os.LookupEnv(ENV_SERVER_PORT)
 	if !b {
 		port = DEFAULT_SERVER_PORT
-		log.Warnf("Not found env %port so sets to default value: %v", ENV_SERVER_PORT, DEFAULT_SERVER_PORT)
+		logger.Warnf("Not found env %port so sets to default value: %v", ENV_SERVER_PORT, DEFAULT_SERVER_PORT)
 	}
 	server := &Server{}
 	server.Network = DEFAULT_SERVER_NETWORK
 	if p, err := strconv.ParseInt(port, 10, 32); err != nil {
-		log.Errorf("Parse port error! error: %s", err.Error())
+		logger.Errorf("Parse port error! error: %s", err.Error())
 		return
 	} else {
 		pp := uint32(p)
