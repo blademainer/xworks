@@ -13,6 +13,7 @@ enum Actions {
 message Request {
     string name = 1;
     int32 type = 2;
+    uint64 requestId = 5;
     google.protobuf.Any body = 4;
 }
 
@@ -20,6 +21,7 @@ message Response {
     string code = 1;
     string message = 2;
     string describe = 3;
+    uint64 requestId = 5;
     google.protobuf.Any body = 4;
 }
 

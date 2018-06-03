@@ -4,8 +4,9 @@ import (
 	"net"
 	logger "github.com/sirupsen/logrus"
 	"fmt"
-	"bufio"
 	"io"
+	"bufio"
+	"errors"
 )
 
 type ConnectionClosedError struct {
@@ -19,9 +20,9 @@ func (e ConnectionClosedError) Error() string {
 }
 
 //func ReadBytes(conn net.Conn) ([]byte, error) {
-//	one := make([]byte, 32)
+//	buf := make([]byte, 1024)
 //	//conn.SetReadDeadline(time.Now())
-//	if _, err := conn.Read(one); err != nil {
+//	if length, err := conn.Read(buf); err != nil {
 //		if err == io.EOF {
 //			//logger.Debugf("%s detected closed connection. error: %s type: %T", conn, err.Error(), err)
 //			err = &ConnectionClosedError{err.Error(), conn, err}
@@ -35,7 +36,8 @@ func (e ConnectionClosedError) Error() string {
 //	} else {
 //		//var zero time.Time
 //		//conn.SetReadDeadline(time.Now().Add(10 * time.Millisecond))
-//		return one, nil
+//		logger.Debugf("Read bytes: %d \n", length)
+//		return buf[:length], nil
 //	}
 //}
 
@@ -58,13 +60,34 @@ func (e ConnectionClosedError) Error() string {
 //	}
 //}
 
-func ReadBytes(conn net.Conn) ([]byte, error) {
+//func ReadBytes(conn net.Conn) ([]byte, error) {
+//	reader := bufio.NewReader(conn)
+//	if line, _, err := reader.ReadLine(); err != nil {
+//		if err == io.EOF {
+//			//logger.Debugf("%s detected closed connection. error: %s type: %T", conn, err.Error(), err)
+//			err = &ConnectionClosedError{err.Error(), conn, err}
+//			logger.Errorf("Closed conn: %v, err: %s", conn, err.Error())
+//			//if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
+//			//}
+//			conn.Close()
+//			conn = nil
+//		}
+//		return nil, err
+//
+//	} else {
+//		//var zero time.Time
+//		//conn.SetReadDeadline(zero)
+//		logger.Debugf("Get byte: %v", string(line))
+//		return line, nil
+//	}
+//}
 
-	if line, _, err := bufio.NewReader(conn).ReadLine(); err != nil {
+func ReadBytes(reader *bufio.Reader, conn net.Conn) ([]byte, error) {
+	if line, _, err := reader.ReadLine(); err != nil {
 		if err == io.EOF {
 			//logger.Debugf("%s detected closed connection. error: %s type: %T", conn, err.Error(), err)
 			err = &ConnectionClosedError{err.Error(), conn, err}
-			logger.Errorf("Closed conn: %v, err: %s", conn, err.Error())
+			logger.Warnf("Closed conn: %v, err: %s", conn, err.Error())
 			//if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
 			//}
 			conn.Close()
@@ -72,10 +95,35 @@ func ReadBytes(conn net.Conn) ([]byte, error) {
 		}
 		return nil, err
 
+	} else if len(line) <= 0 {
+		e := errors.New("No data!")
+		logger.Warnf(e.Error())
+		return nil, e
 	} else {
 		//var zero time.Time
 		//conn.SetReadDeadline(zero)
-		logger.Debugf("Get byte: %v", string(line))
-		return line, nil
+		//logger.Debugf("Get byte: %v", string(line))
+		//bytes := make([]byte, len(line)+1)
+		//copy(bytes, []byte{10})
+		//copy(bytes[1:], line)
+		bytes := Insert(line, []byte{'\n'}, 0)
+		//line = append(line, '\n')
+		return bytes, nil
 	}
 }
+
+func Insert(slice, insertion []byte, index int) []byte {
+	result := make([]byte, len(slice)+len(insertion))
+	at := copy(result, slice[:index])
+	at += copy(result[at:], insertion)
+	copy(result[at:], slice[index:])
+	return result
+}
+//func Insert(slice, insertion []interface{}, index int) []interface{} {
+//	result := make([]interface{}, len(slice)+len(insertion))
+//	at := copy(result, slice[:index])
+//	at += copy(result[at:], insertion)
+//	copy(result[at:], slice[index:])
+//	return result
+//}
+

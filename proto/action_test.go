@@ -7,7 +7,7 @@ import (
 )
 
 func Test_Marshal(t *testing.T) {
-	test := &Action{
+	test := &Request{
 		Name: "hello",
 		Type:  17,
 	}
@@ -15,7 +15,7 @@ func Test_Marshal(t *testing.T) {
 	if err != nil {
 		log.Fatal("marshaling error: ", err)
 	}
-	newTest := &Action{}
+	newTest := &Request{}
 	err = proto.Unmarshal(data, newTest)
 	if err != nil {
 		log.Fatal("unmarshaling error: ", err)

@@ -3,25 +3,22 @@ package main
 import (
 	"net"
 	"os"
-	logger "github.com/sirupsen/logrus"
 	"strconv"
 	"fmt"
 	"github.com/blademainer/xworks/network"
 	"time"
+	"github.com/blademainer/xworks/proto"
+	pb "github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes/any"
+	"github.com/blademainer/xworks/common"
+	logger "github.com/sirupsen/logrus"
+	"bufio"
 )
 
 const (
 	ENV_SERVER_PORT = "SERVER_PORT"
-	ENV_LOG_LEVEL   = "LOG_LEVEL"
-
 	DEFAULT_SERVER_PORT    = "1717"
 	DEFAULT_SERVER_NETWORK = "tcp"
-	DEFAULT_LOG_LEVEL      = "debug"
-
-	LOG_LEVEL_DEBUG = "debug"
-	LOG_LEVEL_INFO  = "info"
-	LOG_LEVEL_WARN  = "warn"
-	LOG_LEVEL_ERROR = "error"
 )
 
 type (
@@ -51,32 +48,30 @@ func (server *Server) Start(network, address string) {
 func processConn(conn net.Conn) {
 	conn.SetReadDeadline(time.Time{})
 	logger.Debugf("Accepted connection: %v", conn)
+	reader := bufio.NewReader(conn)
 	go func() {
-		for _, e := network.ReadBytes(conn); e == nil; _, e = network.ReadBytes(conn) {
+		for _, e := network.ReadBytes(reader, conn); e == nil; _, e = network.ReadBytes(reader, conn) {
 			//fmt.Println(e.Error())
 			//fmt.Println("Read: ", string(bytes))
 		}
 	}()
 	for i := 0; i < 100; i++ {
-		conn.Write([]byte("Hello world!\n"))
+		body := &any.Any{Value: []byte(fmt.Sprintf("%s%d", "Hello!world!", i))}
+		request := &proto.Request{
+			Name: fmt.Sprintf("%s%d", "Hello!world!", i),
+			Body: body,
+		}
+		if bytes, e := pb.Marshal(request); e == nil {
+			//bytes = append(bytes, '\n')
+			conn.Write(bytes)
+			logger.Debugf("Write bytes: %v length: %d", bytes, len(bytes))
+		} else {
+			logger.Errorf("Failed to marshal: %v error: %v", request, e)
+		}
 	}
 }
 
-func setLogLevel() {
-	logLevel, _ := os.LookupEnv(ENV_LOG_LEVEL)
-	switch logLevel {
-	case LOG_LEVEL_DEBUG:
-		logger.SetLevel(logger.DebugLevel)
-	case LOG_LEVEL_INFO:
-		logger.SetLevel(logger.InfoLevel)
-	case LOG_LEVEL_WARN:
-		logger.SetLevel(logger.WarnLevel)
-	case LOG_LEVEL_ERROR:
-		logger.SetLevel(logger.ErrorLevel)
-	default:
-		logger.SetLevel(logger.DebugLevel)
-	}
-}
+
 
 func start() {
 	port, b := os.LookupEnv(ENV_SERVER_PORT)
@@ -98,7 +93,7 @@ func start() {
 }
 
 func main() {
-	setLogLevel()
+	common.SetLogLevel()
 	start()
 
 }
