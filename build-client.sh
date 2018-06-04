@@ -8,3 +8,4 @@ XY_TAG=${XY_REPO:-hub.xycloud.com/18504}:client-${arch}-${version}
 echo "repo: $REPO"
 docker build -f dockerfile-client -t $REPO -t ${XY_TAG} .
 docker push $REPO
+docker push ${XY_TAG}

@@ -7,3 +7,4 @@ REPO=blademainer/xworks:server-${arch}-${version}
 XY_TAG=${XY_REPO:-hub.xycloud.com/18504}:server-${arch}-${version}
 docker build -f dockerfile-server -t $REPO -t ${XY_TAG} .
 docker push $REPO
+docker push ${XY_TAG}
