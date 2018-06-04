@@ -4,25 +4,21 @@ services:
 - docker
 go:
 - 1.10.x
+before_install:
+- docker login -u $DOCKER_USER -p $DOCKER_PASS
 install:
-  - go get -v github.com/Masterminds/glide
-  - cd $GOPATH/src/github.com/Masterminds/glide && git checkout e73500c735917e39a8b782e0632418ab70250341 && go install && cd -
-  - glide install
-  - env GOOS=linux GOARCH=arm go build -o bin/server ./server
-
+- build-server.sh arm
+- build-server.sh amd64
+- build-client.sh arm
+- build-client.sh amd64
 cache:
   directories:
   - vendor
-#env:
-#  global:
-#    - COMMIT=${TRAVIS_COMMIT::8}
-#    - secure: ds93G5aW/jaVOMuN3sq+Tp/BHvTdZ6lWMai0GZXRnAYYAyKfJnbIRSO9BvCd7Ve2sGvrzCd9JPMtvULcY1YU/dXeut+6t/r54YEzOMj2OjHMffk3tmKAUjDIkvTVtuIOkSdRZdTjul7/khxqDOvZ9W2JbCWlq2ODhV+u8sRcvUEnNavO4t+mmORMXboHOva2RTozTFkfLJaDhC6ufXG4SwQP8v8mpSedeXUudU1R1aOnx0kizVORgHdLup0EGyXwALpSdu98caiBxPlq41+yi7HTFdrwi8y6vJyVwq8gippr4ZXscovGQzisGW1RFS/vgNQDGqZD/KEd4S+RFRNCB4NTMN4KjY25vF60XDD83neZWEfBx6OBydHvr5XxBmelik/20+nvY+z7CyIsU5CItD7Ek4gEHZ9/ZbNLtb18VmLH46je2j3xbq59zajGfcUA1PZk4JLAHaGmEGkzKTr5S9sC6Jg0CVLjtZ9NOyS6C99pzMT8zZlFfP3WdWH+w6R4v4IklF+e2nQxisy/c2iKLFyq6LqqGSjehIFNfW9T46uzu2WjE8TjkwlK8ERQacNWBaZLVJQ+0s0ua9BeiT1i82CIPDdksh9U135xiLHbE6gIU/x1uG0/CyM2CYfqyw6l57NiKu7OMVYukkEp+HsxT3a+KNMF4VtG+WNdrGfdDlY=
-#    - secure: AJG7o5r2sgSra9PqPVgEn71YTjnTivRIpXArVOZWBYoCGORBdt/Qc/Sc3VVMO/5AOXblzQ060JQtYxNIhyn7zG88dALafi9PMs/AFu11J4WBwmalBmocfLA8erTH3s+np98gomL0c3d0vblOjZd3bZM5jOyTHtcq+mE0Uq4/bajVWCivVVk+lE5av63Qslpfz5c1HOoVrJV5Mp8BmAyf7zrB7FIZPZN0iLIKAPplDN1Y+Bmt1FFWRan4r7HXicFGMuo7v9RiQH8Pb6R66HVzKP1wJpgOZwDsdTsTChT2iEcnTMuRRKvDPHpQtD0wy70qIzIya4HYVIkJrSWwszir9TV3vV67q1Hx2PVsCSYRumv0+GvwVgdkahN5TmnUll/d092/2jZGkK9oR5eic8hZamRCEyYqgv1ecNvI4DUjcOoJ9PROr9MMxa5j7h9z9Bow9vIx7Rx+GpbagVjWgOL8lG7s3H+2FDKMIBq/ZzhURsp6vBx59QOR9WRy+85FSvimldqoTETQst9EgsppxERb+UGLSEzc/j3xzjO0igax197DrwUW2303xJebDWze/hPBVZZDV3JLnngL2uEKV0J+GORXUjsSVSZPw7x0XKIXbUvTvsRXPUYgrjG7tut1K41PBEH3ZsRSYUVCXciq3gnmtlkPAjzBdaysePp8+bZB+ug=
-#after_success:
-#  - export version="v`date  +"%Y%m%d%H%M%s"`"
-#  - export REPO=hub.xycloud.com/4164/web-crawler:${version}
-#  - echo "REPO ===== $REPO"
-#  - env
-#  - docker build -f web-crawler-docker -t $REPO .
-#  - docker login hub.xycloud.com -u $DOCKER_USER -p $DOCKER_PASS
-#  - sleep 2 && docker push $REPO
+env:
+  global:
+  - COMMIT=${TRAVIS_COMMIT::8}
+  matrix:
+  - secure: cspvRo7ju/Qh28NAm1Bc63xHVbk0zd0AaigViU6SyAe7G27u/Dx8HN6CWmmrW1v6uTE595ZkwcQwTRzPMkL9S+1IDuDq7vcMVgF3jFT8n1YLQgNxJPYLVbKA4PFMl8Y2cvby20MAd1zwDnvLWyF5BmlNXDY167prgVOQDW6Ybk2YSC2x084J56X7+2QRdNdnuVxH6xnD9TLFWq/pvPz8OQq4/LPWI0fGbATmmDCRkcbChhXavVDhzdlXMT96M+YPv2ySTl69yJXgEhRN6csXe5+LZBOgEGDAr5pDomy0oJQpJwK6cwBDtYE9YeNL9V7hzcgWDcG7BoZ0vHh5OirquWqI7m2p2ckkvpgAadKcenGcCusQVSkFIX/HO13ZLzEquj+QG7sDeW7BgpdsMzVJSlyvw8cwqaWJVUkkhRjy151f6XUZB3b8+tM6YhGs48oHUVDHqNAdkFKpJxK5D1Y2dcRZEq75dKSbNkFpXtd5kmb2oIILQJoNfXcibOgdFviE95SDsPax4vwoG/r08HXt6QyVetu0iUbfRnssYRQ36Ar5Jo3RumaloLVv8ozyOSdcOjDTzzW8l9gd2NopwXE53UXgDbv9lQPKd+XUnHBtTZgKZGnyWGnNaWhM797L59Zx3QZOD+UWHphh3lSD4F1Y1RzMShxJMl8LdkVvXLPiqKU=
+  - secure: E0WIntMVOctLQmIiqiFo4OMlBAwiyQZLxKdwoowfKuSaapfZVupbJzB2iERCKacuW+udqmNK6EW7mNG8GUzZwJv0yo2vihojLNOXn8XwE2y/5D7/P2quI0sG8u1qG0h+cNHmI2FFJ5vnXAybHOmVcsTLZxl0rV4+YHgxAgIo8FT/tWSSUm2nYNA1G7Ggtz/fS2aXm8Z0WJs2J8s08kMxmuJQMdVFpIgFfa9Oh2vhAjyfV0xMfI1IdkMcH2CrVVT2bOoWLjw6HDZXdISdVx1VjzZWHvzqq/KdRMOCyrt2Wn3pDXDr7bFR0iv1GVJeNQRbmDYnhO32KiQdMaqmd4sUeIjdDNnBNViQlGoxv6l8cG998GkB8UdTU1L8g7UHXleV4HRVdEIQ8bymylHJm5XS9Cg6HAEXf+pyUgZZfFqh5ZwSo3a1/Qmz1V2fq+dyuJny5RxzPK0vb89QfhJ0bRQ7KxZkCjbaPi7cXKj5/sKrK5j+zk7Cbtr3Zp16WPIc3nJD57Yw4WPATXliUY/Gv5eFrM++d9UT1LZlAXDW+hZYat1XQT2gTRfqJeNewGkT7GhZnZE0e+Sos6lh1tOSKhyHyA7kemwpT3hjKq5586s4P6bMT40yQVuLsIVCd8b+qdYAvLQ97ASNxxmfm7HDNRzMWKLNtR0L5s1tcohSAYrMz5o=
+after_success:
+

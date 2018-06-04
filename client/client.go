@@ -11,6 +11,7 @@ import (
 	"github.com/blademainer/xworks/common"
 	"bufio"
 	"os"
+	"github.com/golang/protobuf/ptypes/any"
 )
 
 const (
@@ -48,8 +49,21 @@ func main() {
 			}
 			exit <- true
 		}(done)
-
-		<-done
+		i := 0
+		for ; ; i++ {
+			body := &any.Any{Value: []byte(fmt.Sprintf("%s%d", "Hello!server!", i))}
+			request := &proto.Request{
+				Name: fmt.Sprintf("%s%d", "Hello!world!", i),
+				Body: body,
+			}
+			if bytes, e := pb.Marshal(request); e == nil {
+				//bytes = append(bytes, '\n')
+				conn.Write(bytes)
+				logger.Debugf("Write bytes: %v length: %d", bytes, len(bytes))
+			} else {
+				logger.Errorf("Failed to marshal: %v error: %v", request, e)
+			}
+		}
 	} else {
 		logger.Errorf("Connection server error! msg: %s", e.Error())
 	}
