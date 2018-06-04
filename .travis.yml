@@ -4,10 +4,8 @@ services:
 - docker
 go:
 - 1.10.x
-before_install:
-- env
-- docker login -u $DOCKER_USER -p $DOCKER_PASS
 install:
+- docker login -u $DOCKER_USER -p $DOCKER_PASS
 - build-server.sh arm
 - build-server.sh amd64
 - build-client.sh arm
