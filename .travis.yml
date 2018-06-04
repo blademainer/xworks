@@ -7,7 +7,7 @@ go:
 install:
 - docker login -u$DOCKER_USER -p$DOCKER_PASS
 - docker login $XY_REPO -u$DOCKER_XY_USER -p$DOCKER_XY_PASS
-- "./build-server.sh arm"
+#- "./build-server.sh arm"
 - "./build-server.sh amd64"
 - "./build-client.sh arm"
 - "./build-client.sh amd64"

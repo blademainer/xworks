@@ -1,6 +1,6 @@
-FROM scratch
+FROM ubuntu
 ENV WORKDIR /usr/local/galaxy
-COPY bin/server $WORKDIR
+ADD bin/server $WORKDIR
 WORKDIR /usr/local/galaxy/
 EXPOSE 1717
 CMD ["./server"]
