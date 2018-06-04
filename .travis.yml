@@ -5,12 +5,14 @@ services:
 go:
 - 1.10.x
 before_install:
+- env
 - docker login -u $DOCKER_USER -p $DOCKER_PASS
 install:
 - build-server.sh arm
 - build-server.sh amd64
 - build-client.sh arm
 - build-client.sh amd64
+
 cache:
   directories:
   - vendor
