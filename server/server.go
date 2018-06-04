@@ -47,7 +47,7 @@ func (server *Server) Start(network, address string) {
 
 func processConn(conn net.Conn) {
 	conn.SetReadDeadline(time.Time{})
-	logger.Debugf("Accepted connection: %v", conn)
+	logger.Debugf("Accepted connection: %v", conn.RemoteAddr())
 	reader := bufio.NewReader(conn)
 	go func() {
 		for _, e := network.ReadBytes(reader, conn); e == nil; _, e = network.ReadBytes(reader, conn) {
