@@ -5,7 +5,7 @@ services:
 go:
 - 1.10.x
 install:
-- docker login -u $DOCKER_USER -p $DOCKER_PASS
+- docker login -u$DOCKER_USER -p$DOCKER_PASS
 - build-server.sh arm
 - build-server.sh amd64
 - build-client.sh arm
