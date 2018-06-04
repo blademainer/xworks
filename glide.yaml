@@ -5,6 +5,6 @@ import:
   subpackages:
   - proto
   - ptypes/any
-- package: github.com/Sirupsen/logrus
+- package: github.com/sirupsen/logrus
   version: ~1.0.5
 
