@@ -77,7 +77,7 @@ func start() {
 	port, b := os.LookupEnv(ENV_SERVER_PORT)
 	if !b {
 		port = DEFAULT_SERVER_PORT
-		logger.Warnf("Not found env %port so sets to default value: %v", ENV_SERVER_PORT, DEFAULT_SERVER_PORT)
+		logger.Warnf("Not found env %s so sets to default value: %v", ENV_SERVER_PORT, DEFAULT_SERVER_PORT)
 	}
 	server := &Server{}
 	server.Network = DEFAULT_SERVER_NETWORK
