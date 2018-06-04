@@ -50,9 +50,9 @@ func processConn(conn net.Conn) {
 	logger.Debugf("Accepted connection: %v", conn.RemoteAddr())
 	reader := bufio.NewReader(conn)
 	go func() {
-		for _, e := network.ReadBytes(reader, conn); e == nil; _, e = network.ReadBytes(reader, conn) {
+		for bytes, e := network.ReadBytes(reader, conn); e == nil; bytes, e = network.ReadBytes(reader, conn) {
 			//fmt.Println(e.Error())
-			//fmt.Println("Read: ", string(bytes))
+			logger.Debugf("Read: %v", bytes)
 		}
 	}()
 	for i := 0; i < 100; i++ {
