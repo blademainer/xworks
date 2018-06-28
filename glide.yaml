@@ -7,4 +7,5 @@ import:
   - ptypes/any
 - package: github.com/sirupsen/logrus
   version: ~1.0.5
-
+- name: gopkg.in/natefinch/lumberjack.v2
+  version: v2.1

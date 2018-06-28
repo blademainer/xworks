@@ -1,5 +1,5 @@
 hash: 99cb19f511473d984f117271a12af3f9a8cddef09b0ca38eab3a5c0d71e1bbeb
-updated: 2018-06-01T01:05:57.772166022+08:00
+updated: 2018-06-29T00:38:38.587443388+08:00
 imports:
 - name: github.com/golang/protobuf
   version: b4deda0973fb4c70b50d226b1af49f3da59f5265
@@ -17,4 +17,6 @@ imports:
   subpackages:
   - unix
   - windows
+- name: gopkg.in/natefinch/lumberjack.v2
+  version: a96e63847dc3c67d17befa69c303767e2f84e54f
 testImports: []
