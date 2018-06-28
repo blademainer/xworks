@@ -1,9 +1,8 @@
 package network
 
 import (
-	"net"
 	"github.com/blademainer/xworks/proto"
-
+	"net"
 )
 
 type (
@@ -24,13 +23,10 @@ type (
 	}
 
 	Listener interface {
-
 	}
 
 	Server interface {
 		RegisterClient(client *Client)
 		RegisterListener()
 	}
-
-
 )

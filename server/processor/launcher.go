@@ -1,19 +1,20 @@
 package processor
 
 import (
-	"net"
-	"os"
-	"strconv"
+	"bufio"
 	"fmt"
+	"github.com/blademainer/xworks/logger"
 	"github.com/blademainer/xworks/network"
-	"time"
 	"github.com/blademainer/xworks/proto"
 	pb "github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/any"
-	"github.com/blademainer/xworks/common"
-	logger "github.com/sirupsen/logrus"
-	"bufio"
+	"net"
+	"os"
+	"strconv"
+	"time"
 )
+
+var Logger = logger.Log
 
 const (
 	ENV_SERVER_PORT        = "SERVER_PORT"
@@ -29,10 +30,10 @@ type (
 )
 
 func (server *Server) Start(network, address string) {
-	logger.Infof("Starting server... %v: %s", network, address)
+	Logger.Infof("Starting server... %v: %s", network, address)
 	listener, e := net.Listen(network, address)
 	if e != nil {
-		logger.Errorf("Failed to start server: %v", e.Error())
+		Logger.Errorf("Failed to start server: %v", e.Error())
 		return
 	}
 	for {
@@ -40,19 +41,19 @@ func (server *Server) Start(network, address string) {
 		if err == nil {
 			go processConn(conn)
 		} else {
-			logger.Errorf("Failed to accept! error: %s", err.Error())
+			Logger.Errorf("Failed to accept! error: %s", err.Error())
 		}
 	}
 }
 
 func processConn(conn net.Conn) {
 	conn.SetReadDeadline(time.Time{})
-	logger.Debugf("Accepted connection: %v", conn.RemoteAddr())
+	Logger.Debugf("Accepted connection: %v", conn.RemoteAddr())
 	reader := bufio.NewReader(conn)
 	go func() {
 		for bytes, e := network.ReadBytes(reader, conn); e == nil; bytes, e = network.ReadBytes(reader, conn) {
 			//fmt.Println(e.Error())
-			logger.Debugf("Read: %v", bytes)
+			Logger.Debugf("Read: %v", bytes)
 		}
 	}()
 	i := 0
@@ -65,25 +66,23 @@ func processConn(conn net.Conn) {
 		if bytes, e := pb.Marshal(request); e == nil {
 			//bytes = append(bytes, '\n')
 			conn.Write(bytes)
-			logger.Debugf("Write bytes: %v length: %d", bytes, len(bytes))
+			Logger.Debugf("Write bytes: %v length: %d", bytes, len(bytes))
 		} else {
-			logger.Errorf("Failed to marshal: %v error: %v", request, e)
+			Logger.Errorf("Failed to marshal: %v error: %v", request, e)
 		}
 	}
 }
 
 func Start() {
-	common.SetLogLevel()
-
 	port, b := os.LookupEnv(ENV_SERVER_PORT)
 	if !b {
 		port = DEFAULT_SERVER_PORT
-		logger.Warnf("Not found env %s so sets to default value: %v", ENV_SERVER_PORT, DEFAULT_SERVER_PORT)
+		Logger.Warnf("Not found env %s so sets to default value: %v", ENV_SERVER_PORT, DEFAULT_SERVER_PORT)
 	}
 	server := &Server{}
 	server.Network = DEFAULT_SERVER_NETWORK
 	if p, err := strconv.ParseInt(port, 10, 32); err != nil {
-		logger.Errorf("Parse port error! error: %s", err.Error())
+		Logger.Errorf("Parse port error! error: %s", err.Error())
 		return
 	} else {
 		pp := uint32(p)

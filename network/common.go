@@ -1,12 +1,12 @@
 package network
 
 import (
-	"net"
-	logger "github.com/sirupsen/logrus"
-	"fmt"
-	"io"
 	"bufio"
 	"errors"
+	"fmt"
+	logger "github.com/sirupsen/logrus"
+	"io"
+	"net"
 )
 
 type ConnectionClosedError struct {
@@ -119,6 +119,7 @@ func Insert(slice, insertion []byte, index int) []byte {
 	copy(result[at:], slice[index:])
 	return result
 }
+
 //func Insert(slice, insertion []interface{}, index int) []interface{} {
 //	result := make([]interface{}, len(slice)+len(insertion))
 //	at := copy(result, slice[:index])
@@ -126,4 +127,3 @@ func Insert(slice, insertion []byte, index int) []byte {
 //	copy(result[at:], slice[index:])
 //	return result
 //}
-

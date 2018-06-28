@@ -1,15 +1,15 @@
 package proto
 
 import (
-	"testing"
 	"github.com/golang/protobuf/proto"
 	"log"
+	"testing"
 )
 
 func Test_Marshal(t *testing.T) {
 	test := &Request{
 		Name: "hello",
-		Type:  17,
+		Type: 17,
 	}
 	data, err := proto.Marshal(test)
 	if err != nil {

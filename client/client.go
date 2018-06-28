@@ -1,18 +1,20 @@
 package main
 
 import (
-	"net"
-	logger "github.com/sirupsen/logrus"
-	"github.com/blademainer/xworks/network"
-	pb "github.com/golang/protobuf/proto"
-	"github.com/blademainer/xworks/proto"
-	"fmt"
-	"time"
-	"github.com/blademainer/xworks/common"
 	"bufio"
-	"os"
+	"fmt"
+
+	"github.com/blademainer/xworks/logger"
+	"github.com/blademainer/xworks/network"
+	"github.com/blademainer/xworks/proto"
+	pb "github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/any"
+	"net"
+	"os"
+	"time"
 )
+
+var Logger = logger.Log
 
 const (
 	ENV_SERVER_ADDR     = "SERVER_ADDR"
@@ -20,7 +22,6 @@ const (
 )
 
 func main() {
-	common.SetLogLevel()
 
 	addr, b := os.LookupEnv(ENV_SERVER_ADDR)
 	if !b {
@@ -39,10 +40,10 @@ func main() {
 					if e = pb.Unmarshal(bytes, request); e == nil {
 						fmt.Printf("Unmarshal: %d bytes to Request: %v \n", len(bytes), request)
 					} else {
-						logger.Errorf("Failed to unmarshal: %v error: %v", request, e)
+						Logger.Errorf("Failed to unmarshal: %v error: %v", request, e)
 					}
 				} else if closedErr, closed := e.(network.ConnectionClosedError); closed {
-					logger.Errorf(closedErr.Error())
+					Logger.Errorf(closedErr.Error())
 					exit <- true
 					break
 				}
@@ -59,12 +60,12 @@ func main() {
 			if bytes, e := pb.Marshal(request); e == nil {
 				//bytes = append(bytes, '\n')
 				conn.Write(bytes)
-				logger.Debugf("Write bytes: %v length: %d", bytes, len(bytes))
+				Logger.Debugf("Write bytes: %v length: %d", bytes, len(bytes))
 			} else {
-				logger.Errorf("Failed to marshal: %v error: %v", request, e)
+				Logger.Errorf("Failed to marshal: %v error: %v", request, e)
 			}
 		}
 	} else {
-		logger.Errorf("Connection server error! msg: %s", e.Error())
+		Logger.Errorf("Connection server error! msg: %s", e.Error())
 	}
 }
