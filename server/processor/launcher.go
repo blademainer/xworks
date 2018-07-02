@@ -1,7 +1,6 @@
 package processor
 
 import (
-	"bufio"
 	"fmt"
 	"github.com/blademainer/xworks/logger"
 	"github.com/blademainer/xworks/network"
@@ -11,10 +10,7 @@ import (
 	"net"
 	"os"
 	"strconv"
-	"time"
 )
-
-var Logger = logger.Log
 
 const (
 	ENV_SERVER_PORT        = "SERVER_PORT"
@@ -26,36 +22,47 @@ type (
 	Server struct {
 		Network string
 		Port    uint32
+		*network.EndpointManager
 	}
 )
 
-func (server *Server) Start(network, address string) {
-	Logger.Infof("Starting server... %v: %s", network, address)
-	listener, e := net.Listen(network, address)
+func (server *Server) Start(listen, address string) {
+	logger.Log.Infof("Starting server... %v: %s", listen, address)
+	listener, e := net.Listen(listen, address)
 	if e != nil {
-		Logger.Errorf("Failed to start server: %v", e.Error())
+		logger.Log.Errorf("Failed to start server: %v", e.Error())
 		return
 	}
 	for {
 		conn, err := listener.Accept()
 		if err == nil {
-			go processConn(conn)
+			go server.processConn(conn)
 		} else {
-			Logger.Errorf("Failed to accept! error: %s", err.Error())
+			logger.Log.Errorf("Failed to accept! error: %s", err.Error())
 		}
 	}
 }
 
-func processConn(conn net.Conn) {
-	conn.SetReadDeadline(time.Time{})
-	Logger.Debugf("Accepted connection: %v", conn.RemoteAddr())
-	reader := bufio.NewReader(conn)
-	go func() {
-		for bytes, e := network.ReadBytes(reader, conn); e == nil; bytes, e = network.ReadBytes(reader, conn) {
-			//fmt.Println(e.Error())
-			Logger.Debugf("Read: %v", bytes)
+func (server *Server) processConn(conn net.Conn) {
+	logger.Log.Debugf("Accepted connection: %v", conn.RemoteAddr())
+	//reader := bufio.NewReader(conn)
+	//go func() {
+	//	for bytes, e := network.ReadBytes(reader, conn); e == nil; bytes, e = network.ReadBytes(reader, conn) {
+	//		//fmt.Println(e.Error())
+	//		logger.Log.Debugf("Read: %v", bytes)
+	//	}
+	//}()
+	e := server.InitEndpoint(conn)
+	readCh := e.ReadChannel()
+	for data := range readCh {
+		request := &proto.Request{}
+		if err := pb.Unmarshal(data, request); err != nil {
+			logger.Log.Errorf("Error when unmarshal data: %v error: %s", data, err.Error())
+		} else {
+			logger.Log.Debugf("Unmarshal data: %v to entity: %v", data, request)
 		}
-	}()
+	}
+
 	i := 0
 	for ; ; i++ {
 		body := &any.Any{Value: []byte(fmt.Sprintf("%s%d", "Hello!client!", i))}
@@ -66,23 +73,29 @@ func processConn(conn net.Conn) {
 		if bytes, e := pb.Marshal(request); e == nil {
 			//bytes = append(bytes, '\n')
 			conn.Write(bytes)
-			Logger.Debugf("Write bytes: %v length: %d", bytes, len(bytes))
+			logger.Log.Debugf("Write bytes: %v length: %d", bytes, len(bytes))
 		} else {
-			Logger.Errorf("Failed to marshal: %v error: %v", request, e)
+			logger.Log.Errorf("Failed to marshal: %v error: %v", request, e)
 		}
 	}
 }
 
 func Start() {
+	config := logger.LoggerConfig{
+		Level: logger.LOG_LEVEL_DEBUG,
+	}
+	logger.Log.Init(config)
+
 	port, b := os.LookupEnv(ENV_SERVER_PORT)
 	if !b {
 		port = DEFAULT_SERVER_PORT
-		Logger.Warnf("Not found env %s so sets to default value: %v", ENV_SERVER_PORT, DEFAULT_SERVER_PORT)
+		logger.Log.Warnf("Not found env %s so sets to default value: %v", ENV_SERVER_PORT, DEFAULT_SERVER_PORT)
 	}
-	server := &Server{}
+	manager := network.InitEndpointManager()
+	server := &Server{EndpointManager: manager}
 	server.Network = DEFAULT_SERVER_NETWORK
 	if p, err := strconv.ParseInt(port, 10, 32); err != nil {
-		Logger.Errorf("Parse port error! error: %s", err.Error())
+		logger.Log.Errorf("Parse port error! error: %s", err.Error())
 		return
 	} else {
 		pp := uint32(p)

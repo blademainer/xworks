@@ -1,9 +1,11 @@
 package network
 
 import (
-	"fmt"
+	"bufio"
 	"github.com/blademainer/xworks/logger"
 	"net"
+	"sync"
+	"time"
 )
 
 type (
@@ -11,18 +13,24 @@ type (
 		connection net.Conn
 		writerCh   chan []byte
 		readCh     chan []byte
-		closeCh    chan bool
 		closed     bool
+		closeOnce  sync.Once
 	}
 )
 
 func InitEndpoint(conn net.Conn) (e *endpoint) {
+	conn.SetReadDeadline(time.Time{})
 	e = &endpoint{}
 	e.connection = conn
 	e.writerCh = make(chan []byte)
-	e.closeCh = make(chan bool)
+	e.readCh = make(chan []byte)
 	e.initWriterWorker()
+	e.initReaderWorker()
 	return e
+}
+
+func (endpoint *endpoint) ReadChannel() (readCh chan []byte) {
+	return endpoint.readCh
 }
 
 func (endpoint *endpoint) Write(data []byte) {
@@ -33,11 +41,17 @@ func (endpoint *endpoint) Write(data []byte) {
 }
 
 func (endpoint *endpoint) Close() {
-	endpoint.closed = true
-	endpoint.closeCh <- true
-	if e := endpoint.connection.Close(); e != nil {
-		fmt.Println("Error to close! error: ", e.Error())
-	}
+	endpoint.closeOnce.Do(func() {
+		logger.Log.Warnf("Closing endpoint: %v", endpoint)
+		endpoint.closed = true
+		close(endpoint.readCh)
+		close(endpoint.writerCh)
+		if e := endpoint.connection.Close(); e != nil {
+			logger.Log.Errorf("Error to close! error: %s", e.Error())
+		}
+		logger.Log.Warnf("Closed endpoint: %v", endpoint)
+
+	})
 }
 
 func (endpoint *endpoint) initWriterWorker() {
@@ -55,13 +69,29 @@ func (endpoint *endpoint) processData() {
 					logger.Log.Debugf("Success write data, size: %d", n)
 				}
 			}
-		case <-endpoint.closeCh:
-			return
 		}
 	}
+	logger.Log.Warnf("Closed write worker for endpoint: %v", endpoint)
 
 }
 
 func (endpoint *endpoint) initReaderWorker() {
+	logger.Log.Infof("Starting read worker for endpoint: %v", endpoint)
+	go endpoint.processReadData()
+	logger.Log.Infof("End read worker for endpoint: %v", endpoint)
+}
 
+func (endpoint *endpoint) processReadData() {
+	reader := bufio.NewReader(endpoint.connection)
+	for bytes, e := ReadBytes(reader, endpoint.connection); e == nil; bytes, e = ReadBytes(reader, endpoint.connection) {
+		//fmt.Println(e.Error())
+		logger.Log.Infof("Read: %v", bytes)
+		if endpoint.closed {
+			logger.Log.Warnf("Closed endpoint! %v", endpoint.connection)
+			return
+		}
+		endpoint.readCh <- bytes
+	}
+	logger.Log.Warnf("Closing endpoint! %v", endpoint)
+	endpoint.Close()
 }

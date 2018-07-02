@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	logger "github.com/sirupsen/logrus"
+	"github.com/blademainer/xworks/logger"
 	"io"
 	"net"
 )
@@ -87,7 +87,7 @@ func ReadBytes(reader *bufio.Reader, conn net.Conn) ([]byte, error) {
 		if err == io.EOF {
 			//logger.Debugf("%s detected closed connection. error: %s type: %T", conn, err.Error(), err)
 			err = &ConnectionClosedError{err.Error(), conn, err}
-			logger.Warnf("Closed conn: %v, err: %s", conn, err.Error())
+			logger.Log.Warnf("Closed conn: %v, err: %s", conn, err.Error())
 			//if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
 			//}
 			conn.Close()
@@ -97,7 +97,7 @@ func ReadBytes(reader *bufio.Reader, conn net.Conn) ([]byte, error) {
 
 	} else if len(line) <= 0 {
 		e := errors.New("No data!")
-		logger.Warnf(e.Error())
+		logger.Log.Warnf(e.Error())
 		return nil, e
 	} else {
 		//var zero time.Time
