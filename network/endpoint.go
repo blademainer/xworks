@@ -14,7 +14,9 @@ type (
 		writerCh   chan []byte
 		readCh     chan []byte
 		closed     bool
+		closeCh    chan bool
 		closeOnce  sync.Once
+		wg         sync.WaitGroup
 	}
 )
 
@@ -24,6 +26,7 @@ func InitEndpoint(conn net.Conn) (e *endpoint) {
 	e.connection = conn
 	e.writerCh = make(chan []byte)
 	e.readCh = make(chan []byte)
+	e.closeCh = make(chan bool)
 	e.initWriterWorker()
 	e.initReaderWorker()
 	return e
@@ -43,9 +46,14 @@ func (endpoint *endpoint) Write(data []byte) {
 func (endpoint *endpoint) Close() {
 	endpoint.closeOnce.Do(func() {
 		logger.Log.Warnf("Closing endpoint: %v", endpoint)
+		// waiting for read channel and write channel done.
+		endpoint.wg.Add(2)
 		endpoint.closed = true
+		endpoint.closeCh <- true
+		endpoint.wg.Wait()
 		close(endpoint.readCh)
 		close(endpoint.writerCh)
+		close(endpoint.closeCh)
 		if e := endpoint.connection.Close(); e != nil {
 			logger.Log.Errorf("Error to close! error: %s", e.Error())
 		}
@@ -55,10 +63,10 @@ func (endpoint *endpoint) Close() {
 }
 
 func (endpoint *endpoint) initWriterWorker() {
-	go endpoint.processData()
+	go endpoint.processWriteData()
 }
 
-func (endpoint *endpoint) processData() {
+func (endpoint *endpoint) processWriteData() {
 	for !endpoint.closed {
 		select {
 		case data := <-endpoint.writerCh:
@@ -69,8 +77,11 @@ func (endpoint *endpoint) processData() {
 					logger.Log.Debugf("Success write data, size: %d", n)
 				}
 			}
+		case <-endpoint.closeCh:
+			break
 		}
 	}
+	endpoint.wg.Done()
 	logger.Log.Warnf("Closed write worker for endpoint: %v", endpoint)
 
 }
@@ -83,15 +94,24 @@ func (endpoint *endpoint) initReaderWorker() {
 
 func (endpoint *endpoint) processReadData() {
 	reader := bufio.NewReader(endpoint.connection)
-	for bytes, e := ReadBytes(reader, endpoint.connection); e == nil; bytes, e = ReadBytes(reader, endpoint.connection) {
-		//fmt.Println(e.Error())
-		logger.Log.Infof("Read: %v", bytes)
-		if endpoint.closed {
-			logger.Log.Warnf("Closed endpoint! %v", endpoint.connection)
-			return
+	for !endpoint.closed {
+		select {
+		case <-endpoint.closeCh:
+			break
+		default:
+			if bytes, e := ReadBytes(reader, endpoint.connection); e != nil {
+				logger.Log.Warnf("Closing endpoint! %v cause error: %v", endpoint.connection, e)
+				go func() {
+					endpoint.Close()
+				}()
+				break
+			} else {
+				logger.Log.Debugf("Read data: %v from endpoint! %v", bytes, endpoint.connection)
+				endpoint.readCh <- bytes
+			}
 		}
-		endpoint.readCh <- bytes
+
 	}
-	logger.Log.Warnf("Closing endpoint! %v", endpoint)
-	endpoint.Close()
+	logger.Log.Warnf("Closed reader for endpoint! %v", endpoint.connection)
+	endpoint.wg.Done()
 }

@@ -2,7 +2,6 @@ package network
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"github.com/blademainer/xworks/logger"
 	"io"
@@ -95,10 +94,6 @@ func ReadBytes(reader *bufio.Reader, conn net.Conn) ([]byte, error) {
 		}
 		return nil, err
 
-	} else if len(line) <= 0 {
-		e := errors.New("No data!")
-		logger.Log.Warnf(e.Error())
-		return nil, e
 	} else {
 		//var zero time.Time
 		//conn.SetReadDeadline(zero)
