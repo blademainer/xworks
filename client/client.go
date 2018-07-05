@@ -21,6 +21,10 @@ const (
 	DEFAULT_SERVER_ADDR = "127.0.0.1:1717"
 )
 
+func init(){
+	logger.InitLogLevelFromEnv()
+}
+
 func main() {
 
 	addr, b := os.LookupEnv(ENV_SERVER_ADDR)

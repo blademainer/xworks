@@ -26,13 +26,12 @@ type (
 	}
 )
 
-var Log = logger.NewLogger()
 
 func (server *Server) Start(listen, address string) {
-	Log.Infof("Starting server... %v: %s", listen, address)
+	logger.Log.Infof("Starting server... %v: %s", listen, address)
 	listener, e := net.Listen(listen, address)
 	if e != nil {
-		Log.Errorf("Failed to start server: %v", e.Error())
+		logger.Log.Errorf("Failed to start server: %v", e.Error())
 		return
 	}
 	for {
@@ -40,13 +39,13 @@ func (server *Server) Start(listen, address string) {
 		if err == nil {
 			go server.processConn(conn)
 		} else {
-			Log.Errorf("Failed to accept! error: %s", err.Error())
+			logger.Log.Errorf("Failed to accept! error: %s", err.Error())
 		}
 	}
 }
 
 func (server *Server) processConn(conn net.Conn) {
-	Log.Debugf("Accepted connection: %v", conn.RemoteAddr())
+	logger.Log.Debugf("Accepted connection: %v", conn.RemoteAddr())
 	//reader := bufio.NewReader(conn)
 	//go func() {
 	//	for bytes, e := network.ReadBytes(reader, conn); e == nil; bytes, e = network.ReadBytes(reader, conn) {
@@ -59,9 +58,9 @@ func (server *Server) processConn(conn net.Conn) {
 	for data := range readCh {
 		request := &proto.Request{}
 		if err := pb.Unmarshal(data, request); err != nil {
-			Log.Errorf("Error when unmarshal data: %v error: %s", data, err.Error())
+			logger.Log.Errorf("Error when unmarshal data: %v error: %s", data, err.Error())
 		} else {
-			Log.Infof("Unmarshal data: %v to entity: %v", data, request)
+			logger.Log.Debugf("Unmarshal data: %v to entity: %v", data, request)
 		}
 	}
 
@@ -72,34 +71,36 @@ func (server *Server) processConn(conn net.Conn) {
 			Name: fmt.Sprintf("%s%d", "Hello!world!", i),
 			Body: body,
 		}
-		if bytes, e := pb.Marshal(request); e == nil {
+		if bytes, ee := pb.Marshal(request); ee == nil {
 			//bytes = append(bytes, '\n')
-			conn.Write(bytes)
-			Log.Debugf("Write bytes: %v length: %d", bytes, len(bytes))
+			if err := e.Write(bytes); err != nil {
+				logger.Log.Errorf("Failed to write to conn: %v error: %v", conn, err.Error())
+				return
+			} else {
+				logger.Log.Debugf("Write bytes: %v length: %d", bytes, len(bytes))
+			}
 		} else {
-			Log.Errorf("Failed to marshal: %v error: %v", request, e)
+			logger.Log.Errorf("Failed to marshal: %v error: %v", request, e)
 		}
 	}
 }
 
+func init(){
+	logger.InitLogLevelFromEnv()
+}
+
 func Start() {
-	config := logger.LoggerConfig{
-		Level: logger.LOG_LEVEL_DEBUG,
-	}
-	if e := Log.Init(config); e != nil {
-		fmt.Errorf("Error to init logger! error: %s", e.Error())
-	}
 
 	port, b := os.LookupEnv(ENV_SERVER_PORT)
 	if !b {
 		port = DEFAULT_SERVER_PORT
-		Log.Warnf("Not found env %s so sets to default value: %v", ENV_SERVER_PORT, DEFAULT_SERVER_PORT)
+		logger.Log.Warnf("Not found env %s so sets to default value: %v", ENV_SERVER_PORT, DEFAULT_SERVER_PORT)
 	}
 	manager := network.InitEndpointManager()
 	server := &Server{EndpointManager: manager}
 	server.Network = DEFAULT_SERVER_NETWORK
 	if p, err := strconv.ParseInt(port, 10, 32); err != nil {
-		Log.Errorf("Parse port error! error: %s", err.Error())
+		logger.Log.Errorf("Parse port error! error: %s", err.Error())
 		return
 	} else {
 		pp := uint32(p)

@@ -36,11 +36,12 @@ func (endpoint *endpoint) ReadChannel() (readCh chan []byte) {
 	return endpoint.readCh
 }
 
-func (endpoint *endpoint) Write(data []byte) {
+func (endpoint *endpoint) Write(data []byte) error {
 	if endpoint.closed {
-		return
+		return &ConnectionClosedError{Message: "Connection closed!"}
 	}
 	endpoint.writerCh <- data
+	return nil
 }
 
 func (endpoint *endpoint) Close() {

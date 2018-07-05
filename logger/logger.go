@@ -16,13 +16,22 @@ import (
 const (
 	ENV_LOG_LEVEL = "LOG_LEVEL"
 
-	DEFAULT_LOG_LEVEL = "debug"
 
 	LOG_LEVEL_DEBUG = "debug"
 	LOG_LEVEL_INFO  = "info"
 	LOG_LEVEL_WARN  = "warn"
 	LOG_LEVEL_ERROR = "error"
+
+	DEFAULT_LOG_LEVEL = LOG_LEVEL_DEBUG
 )
+
+func InitLogLevelFromEnv() {
+	logLevel, exists := DEFAULT_LOG_LEVEL, false
+	if logLevel, exists = os.LookupEnv(ENV_LOG_LEVEL); !exists{
+		logLevel = DEFAULT_LOG_LEVEL
+	}
+	Log.SetLevel(logLevel)
+}
 
 func SetLogLevel() {
 	logLevel, _ := os.LookupEnv(ENV_LOG_LEVEL)
