@@ -87,7 +87,7 @@ func Start() {
 		Level: logger.LOG_LEVEL_DEBUG,
 	}
 	if e := Log.Init(config); e != nil {
-		fmt.Errorf("Error to init logger! error: %s", e.Error())
+		fmt.Printf("Error to init logger! error: %s", e.Error())
 	}
 
 	port, b := os.LookupEnv(ENV_SERVER_PORT)

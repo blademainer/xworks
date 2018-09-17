@@ -3,8 +3,9 @@ sudo: required
 services:
 - docker
 go:
-- 1.10.x
+- 1.11
 install:
+- export GO111MODULE=on
 - docker login -u$DOCKER_USER -p$DOCKER_PASS
 - docker login $XY_REPO -u$DOCKER_XY_USER -p$DOCKER_XY_PASS
 #- "./build-server.sh arm"

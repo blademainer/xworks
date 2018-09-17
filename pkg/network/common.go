@@ -3,7 +3,7 @@ package network
 import (
 	"bufio"
 	"fmt"
-	"github.com/blademainer/xworks/logger"
+	"github.com/blademainer/xworks/pkg/logger"
 	"io"
 	"net"
 )

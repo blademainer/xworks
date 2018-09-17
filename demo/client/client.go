@@ -1,11 +1,11 @@
-package main
+package client
 
 import (
 	"bufio"
 	"fmt"
 
-	"github.com/blademainer/xworks/logger"
-	"github.com/blademainer/xworks/network"
+	"github.com/blademainer/xworks/pkg/logger"
+	"github.com/blademainer/xworks/pkg/network"
 	"github.com/blademainer/xworks/proto"
 	pb "github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/any"

@@ -2,7 +2,7 @@ package network
 
 import (
 	"bufio"
-	"github.com/blademainer/xworks/logger"
+	"github.com/blademainer/xworks/pkg/logger"
 	"net"
 	"sync"
 	"time"

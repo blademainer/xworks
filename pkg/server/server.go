@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/blademainer/xworks/server/processor"
+	"github.com/blademainer/xworks/pkg/server/processor"
 )
 
 func main() {
