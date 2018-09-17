@@ -6,5 +6,5 @@
 #docker run --rm -v `pwd`/:/go/src/github.com/blademainer/xworks:rw -v $GOPATH/src/:/go/src -w /go/src/github.com/blademainer/xworks -it golang  bash -c "go get -v github.com/Masterminds/glide; cd /go/src/github.com/Masterminds/glide && git checkout e73500c735917e39a8b782e0632418ab70250341 && go install && cd - && glide install; mkdir -p bin; env GOOS=linux GOARCH=arm go build -o bin/server ./server; env GOOS=linux GOARCH=arm  go build -o bin/client ./client"
 #env GOOS=linux GOARCH=arm go build -o bin/server ./server
 arch="${1:-arm}"
-docker run --rm -v $GOPATH/src/:/go/src:rw -w /go/src/github.com/blademainer/xworks -e "GO111MODULE=on" -it golang:1.11  bash -c "mkdir -p bin; env GOOS=linux GOARCH=${arch} CGO_ENABLED=1 go build -o bin/server/server ./demo/server; env GOOS=linux GOARCH=${arch}  go build -o bin/client/client ./demo/client"
+docker run --rm -v $GOPATH/src/:/go/src:rw -w /go/src/github.com/blademainer/xworks -e "GO111MODULE=on" -it golang:1.11  bash -c "mkdir -p bin; GOOS=linux GOARCH=${arch} CGO_ENABLED=1 go build -o bin/server/server ./demo/server; GOOS=linux GOARCH=${arch} CGO_ENABLED=1 go build -o bin/client/client ./demo/client"
 
