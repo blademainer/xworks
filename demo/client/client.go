@@ -1,4 +1,4 @@
-package client
+package main
 
 import (
 	"bufio"
@@ -21,7 +21,7 @@ const (
 	DEFAULT_SERVER_ADDR = "127.0.0.1:1717"
 )
 
-func init(){
+func init() {
 	logger.InitLogLevelFromEnv()
 }
 
