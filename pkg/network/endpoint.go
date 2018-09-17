@@ -24,9 +24,9 @@ func InitEndpoint(conn net.Conn) (e *endpoint) {
 	conn.SetReadDeadline(time.Time{})
 	e = &endpoint{}
 	e.connection = conn
-	e.writerCh = make(chan []byte)
-	e.readCh = make(chan []byte)
-	e.closeCh = make(chan bool)
+	e.writerCh = make(chan []byte, 1024)
+	e.readCh = make(chan []byte, 1024)
+	e.closeCh = make(chan bool, 1)
 	e.initWriterWorker()
 	e.initReaderWorker()
 	return e
@@ -36,11 +36,12 @@ func (endpoint *endpoint) ReadChannel() (readCh chan []byte) {
 	return endpoint.readCh
 }
 
-func (endpoint *endpoint) Write(data []byte) {
+func (endpoint *endpoint) Write(data []byte) error {
 	if endpoint.closed {
-		return
+		return &ConnectionClosedError{Message: "Connection closed!"}
 	}
 	endpoint.writerCh <- data
+	return nil
 }
 
 func (endpoint *endpoint) Close() {
